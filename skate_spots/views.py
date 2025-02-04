@@ -57,6 +57,13 @@ class SearchView(APIView):
                 location_coords = (shop.location_id.latitude, shop.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
+                images_local = LocalImage.objects.filter(skatespot_id=spot)
+                
+                for image_local in images_local:
+                    images.append({
+                        'image': image_local.image.url
+                    })
+
                 results.append({
                     'id': shop.id,
                     'name': shop.name,
@@ -66,6 +73,7 @@ class SearchView(APIView):
                     'image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
                     'description': shop.description,
+                    'images': images
                 })
 
         # Filtra eventos
@@ -77,6 +85,13 @@ class SearchView(APIView):
                 location_coords = (event.location_id.latitude, event.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
+                images_local = LocalImage.objects.filter(skatespot_id=spot)
+                
+                for image_local in images_local:
+                    images.append({
+                        'image': image_local.image.url
+                    })
+
                 results.append({
                     'id': event.id,
                     'name': event.name,
@@ -86,6 +101,7 @@ class SearchView(APIView):
                     'image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
                     'description': event.description,
+                    'images': images
                 })
 
         return Response(results)
