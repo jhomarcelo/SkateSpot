@@ -37,7 +37,7 @@ class SearchView(APIView):
                     })
                     
                 results.append({
-                    'id': spot.id,
+                    'id': main_image.id,
                     'name': spot.name,
                     'type': 'spot',
                     'latitude': spot.location_id.latitude,
@@ -58,7 +58,7 @@ class SearchView(APIView):
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
                 results.append({
-                    'id': shop.id,
+                    'id': main_image.id,
                     'name': shop.name,
                     'type': 'shop',
                     'latitude': shop.location_id.latitude,
@@ -78,7 +78,7 @@ class SearchView(APIView):
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
                 results.append({
-                    'id': event.id,
+                    'id': main_image.id,
                     'name': event.name,
                     'type': 'event',
                     'latitude': event.location_id.latitude,
