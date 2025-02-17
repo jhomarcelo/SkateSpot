@@ -84,6 +84,9 @@ class SkateEvent(models.Model):
 
     name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
     description = models.TextField(verbose_name="Descrição", max_length=250)
+    start_date = models.DateTimeField(verbose_name="Data de Início", blank=False)
+    end_date = models.DateTimeField(verbose_name="Data de Encerramento", blank=False)
+    create_date = models.DateTimeField(verbose_name="Data de Criação")
     location_id = models.OneToOneField(Location, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -119,5 +122,5 @@ class LocalImage(models.Model):
         super(LocalImage, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.image.url  # Isso irá retornar o URL da imagem
+        return self.id  # Isso irá retornar o URL da imagem
     
