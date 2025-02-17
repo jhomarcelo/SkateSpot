@@ -35,7 +35,7 @@ class SearchView(APIView):
                     images.append({
                         'image': image_local.image.url
                     })
-                    
+                
                 results.append({
                     'id': main_image.id,
                     'name': spot.name,
@@ -54,10 +54,11 @@ class SearchView(APIView):
             if search_query:
                 shops = shops.filter(name__icontains=search_query)
             for shop in shops:
+                images = []
                 location_coords = (shop.location_id.latitude, shop.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skatespot_id=spot)
+                images_local = LocalImage.objects.filter(skateshop_id=shop)
                 
                 for image_local in images_local:
                     images.append({
@@ -70,7 +71,7 @@ class SearchView(APIView):
                     'type': 'shop',
                     'latitude': shop.location_id.latitude,
                     'longitude': shop.location_id.longitude,
-                    'image': main_image.image.url if main_image else '',  # Usa a imagem principal
+                    'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
                     'description': shop.description,
                     'images': images
@@ -82,10 +83,11 @@ class SearchView(APIView):
             if search_query:
                 events = events.filter(name__icontains=search_query)
             for event in events:
+                images = []
                 location_coords = (event.location_id.latitude, event.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skatespot_id=spot)
+                images_local = LocalImage.objects.filter(skateevent_id=event)
                 
                 for image_local in images_local:
                     images.append({
@@ -98,13 +100,16 @@ class SearchView(APIView):
                     'type': 'event',
                     'latitude': event.location_id.latitude,
                     'longitude': event.location_id.longitude,
-                    'image': main_image.image.url if main_image else '',  # Usa a imagem principal
+                    'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
                     'description': event.description,
                     'images': images
                 })
 
-        return Response(results)
+        # Ordenando pela distância
+        ordered_results = sorted(results, key=lambda x: x["distance"])
+
+        return Response(ordered_results)
 
 
 class SkateSpotViewSet(viewsets.ModelViewSet):
