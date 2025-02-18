@@ -15,9 +15,10 @@ def validar_cep(value):
 
 def consultar_cep(cep):
     """
-    Consulta o CEP no ViaCEP e retorna os dados do endereço.
+    Consulta o CEP na AWESOMEAPI e retorna os dados do endereço.
     """
-    url = f'https://viacep.com.br/ws/{cep}/json/'
+    #url = f'https://viacep.com.br/ws/{cep}/json/'
+    url = f'https://cep.awesomeapi.com.br/json/{cep}'
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
@@ -46,20 +47,20 @@ class Location(models.Model):
     longitude = models.FloatField(verbose_name="Longitude", blank=False)
 
 
-    def save(self, *args, **kwargs):
-        """
-        Preenche os campos de endereço com base no CEP antes de salvar.
-        """
-        self.full_clean()  # Valida o modelo
-        cep = self.zip_code.replace('-', '')  # Remove o hífen para a consulta
-        data = consultar_cep(cep)
-        if data:
-            self.street = data.get('logradouro', '')
-            self.district = data.get('bairro', '')
-            self.city = data.get('localidade', '')
-            self.state = data.get('uf', '')
+    # def save(self, *args, **kwargs):
+    #     """
+    #     Preenche os campos de endereço com base no CEP antes de salvar.
+    #     """
+    #     self.full_clean()  # Valida o modelo
+    #     cep = self.zip_code.replace('-', '')  # Remove o hífen para a consulta
+    #     data = consultar_cep(cep)
+    #     if data:
+    #         self.street = data.get('address', '')
+    #         self.district = data.get('district', '')
+    #         self.city = data.get('city', '')
+    #         self.state = data.get('state', '')
             
-        super().save(*args, **kwargs)
+    #     super().save(*args, **kwargs)
 
 
     def __str__(self):

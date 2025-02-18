@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path,include
-from skate_spots.views import SearchView
+from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
 from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet
 from django.conf import settings
@@ -17,6 +17,7 @@ router.register(r'local-images', LocalImageViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('search/', SearchView.as_view(), name='search'),
+    path('search_address/', SearchAddressView.as_view(), name='Busca Endereço'),
     path('', include(router.urls)),
 ]
 
