@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from geopy.distance import geodesic
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, validar_cep, consultar_cep
 from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer
 
 
@@ -37,7 +37,7 @@ class SearchView(APIView):
                     })
                 
                 results.append({
-                    'id': main_image.id,
+                    'id': spot.location_id.id,
                     'name': spot.name,
                     'type': 'spot',
                     'latitude': spot.location_id.latitude,
@@ -66,7 +66,7 @@ class SearchView(APIView):
                     })
 
                 results.append({
-                    'id': main_image.id,
+                    'id': shop.location_id.id,
                     'name': shop.name,
                     'type': 'shop',
                     'latitude': shop.location_id.latitude,
@@ -95,7 +95,7 @@ class SearchView(APIView):
                     })
 
                 results.append({
-                    'id': main_image.id,
+                    'id': event.location_id.id,
                     'name': event.name,
                     'type': 'event',
                     'latitude': event.location_id.latitude,
@@ -110,6 +110,27 @@ class SearchView(APIView):
         ordered_results = sorted(results, key=lambda x: x["distance"])
 
         return Response(ordered_results)
+
+
+class SearchAddressView(APIView):
+    def get(self, request):
+        cep = request.query_params.get('cep', '')
+        if cep:
+            cep = cep.replace('-', '')  # Remove o hífen para a consulta
+            data = consultar_cep(cep)
+            if data:
+                results = []
+                results.append({
+                    'cep': data.get('cep', ''),
+                    'logradouro': data.get('address', ''),
+                    'bairro': data.get('district', ''),
+                    'cidade': data.get('city', ''),
+                    'estado': data.get('state', ''),
+                    'pais': 'Brasil' if data.get('state', '') else '',
+                    'latitude': data.get('lat', ''),
+                    'longitude': data.get('lng', ''),
+                })
+                return Response(results)
 
 
 class SkateSpotViewSet(viewsets.ModelViewSet):
