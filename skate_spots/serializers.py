@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure
 
 
 class SkateSpotSerializer(serializers.ModelSerializer):
@@ -31,3 +31,15 @@ class LocalImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocalImage
         fields = '__all__' 
+
+class ModalitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Modality
+        fields = '__all__'
+
+class StructureSerializer(serializers.ModelSerializer):
+    skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all(), source='skatespots')
+    modality_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Modality.objects.all(), source='modalities')
+    class Meta:
+        model = Structure
+        fields = '__all__'
