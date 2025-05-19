@@ -38,8 +38,9 @@ class ModalitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class StructureSerializer(serializers.ModelSerializer):
-    skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all(), source='skatespots')
-    modality_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Modality.objects.all(), source='modalities')
+    skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all())
+    modality_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Modality.objects.all())
+
     class Meta:
         model = Structure
         fields = '__all__'
