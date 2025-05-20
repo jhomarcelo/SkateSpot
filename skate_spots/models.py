@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
@@ -85,9 +86,9 @@ class SkateEvent(models.Model):
 
     name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
     description = models.TextField(verbose_name="Descrição", max_length=250)
-    start_date = models.DateTimeField(verbose_name="Data de Início", blank=False)
-    end_date = models.DateTimeField(verbose_name="Data de Encerramento", blank=False)
-    create_date = models.DateTimeField(verbose_name="Data de Criação")
+    start_date = models.DateTimeField(verbose_name="Data de Início", blank=False, default=timezone.now)
+    end_date = models.DateTimeField(verbose_name="Data de Encerramento", blank=False, default=timezone.now)
+    create_date = models.DateTimeField(verbose_name="Data de Criação", default=timezone.now)  
     location_id = models.OneToOneField(Location, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -103,6 +104,24 @@ class SkateShop(models.Model):
     def __str__(self):
         return self.name
     
+class Modality(models.Model):
+    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
+    description = models.TextField(verbose_name="Descrição", max_length=250)
+    create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
+    update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class Structure(models.Model):
+    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
+    description = models.TextField(verbose_name="Descrição", max_length=250)
+    skatespot_id = models.ManyToManyField(SkateSpot, blank=True)
+    modality_id = models.ManyToManyField(Modality, blank=True)
+
+    def __str__(self):
+        return self.name
+
 
 class LocalImage(models.Model):
 

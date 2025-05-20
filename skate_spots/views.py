@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from geopy.distance import geodesic
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, validar_cep, consultar_cep
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer
 
 
 #Retorna os locais
@@ -156,3 +156,11 @@ class LocationViewSet(viewsets.ModelViewSet):
 class LocalImageViewSet(viewsets.ModelViewSet):
     queryset = LocalImage.objects.all()
     serializer_class = LocalImageSerializer
+
+class ModalityViewSet(viewsets.ModelViewSet):
+    queryset = Modality.objects.all()
+    serializer_class = ModalitySerializer
+
+class StructureViewSet(viewsets.ModelViewSet):
+    queryset = Structure.objects.all()
+    serializer_class = StructureSerializer
