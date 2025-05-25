@@ -35,16 +35,71 @@ CORS_ALLOW_ALL_ORIGINS = True  # Permite todas as origens (apenas para desenvolv
 # Application definition
 
 INSTALLED_APPS = [
+    # Django padrão
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Terceiros
     'rest_framework',
-    'skate_spots',
-    'corsheaders',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
+    # App customizado
+    'skate_spots.apps.SkateSpotsConfig',
 ]
+
+
+# Modelo customizado de usuário
+AUTH_USER_MODEL = 'skate_spots.CustomUser'
+
+# Autenticação do Django Allauth
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # obrigatório
+]
+
+# Configurações do allauth
+ACCOUNT_LOGIN_METHODS = {'email'}  # login só com e-mail
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # exige ativação por e-mail
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutos
+
+# E-mail
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # mostra e-mail no terminal
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # envia e-mail
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'skatespot2025@gmail.com'
+EMAIL_HOST_PASSWORD = 'hepg tjon qzny rvml'
+
+DEFAULT_FROM_EMAIL = 'SkateSpot <skatespot2025@gmail.com>'
+
+
+# dj-rest-auth: serializador de cadastro customizado
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'skate_spots.serializers.CustomRegisterSerializer',
+}
+REST_AUTH_SERIALIZERS = {
+    'LOGIN_SERIALIZER': 'skate_spots.serializers.CustomLoginSerializer',
+}
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # API usa token, sem CSRF
+    ],
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -55,6 +110,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'

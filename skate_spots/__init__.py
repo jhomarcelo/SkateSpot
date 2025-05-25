@@ -1,0 +1,1 @@
+default_app_config = 'skate_spots.apps.SkateSpotsConfig'

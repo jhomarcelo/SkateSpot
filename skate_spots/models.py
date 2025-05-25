@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 import requests
@@ -143,4 +144,14 @@ class LocalImage(models.Model):
 
     def __str__(self):
         return self.id  # Isso irá retornar o URL da imagem
-    
+
+
+def user_profile_path(instance, filename):
+    return f'users/profile_pics/{instance.username}/{filename}'
+
+class CustomUser(AbstractUser):
+    profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True)
+    email = models.EmailField(unique=True)
+
+    def __str__(self):
+        return self.username
