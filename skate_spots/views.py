@@ -4,9 +4,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from geopy.distance import geodesic
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, validar_cep, consultar_cep
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, validar_cep, consultar_cep
 from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer
-
+from dj_rest_auth.registration.views import RegisterView
+from .serializers import CustomRegisterSerializer
 
 #Retorna os locais
 class SearchView(APIView):
@@ -164,3 +165,8 @@ class ModalityViewSet(viewsets.ModelViewSet):
 class StructureViewSet(viewsets.ModelViewSet):
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
+
+
+class CustomRegisterView(RegisterView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomRegisterSerializer
