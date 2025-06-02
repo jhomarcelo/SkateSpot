@@ -3,9 +3,10 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework import permissions
 from geopy.distance import geodesic
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, Rating, validar_cep, consultar_cep
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, RatingSerializer
 from dj_rest_auth.registration.views import RegisterView
 from .serializers import CustomRegisterSerializer
 
@@ -166,6 +167,15 @@ class StructureViewSet(viewsets.ModelViewSet):
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
 
+class RatingViewSet(viewsets.ModelViewSet):
+    serializer_class = RatingSerializer
+    permission_classes = [permissions.IsAuthenticated]  
+
+    def get_queryset(self):
+        return Rating.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class CustomRegisterView(RegisterView):
     queryset = CustomUser.objects.all()

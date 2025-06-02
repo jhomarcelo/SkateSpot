@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path,include
 from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView
+from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, RatingViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -14,6 +14,7 @@ router.register(r'location', LocationViewSet)
 router.register(r'local-images', LocalImageViewSet)
 router.register(r'modalities', ModalityViewSet)
 router.register(r'structures', StructureViewSet)
+router.register(r'ratings', RatingViewSet)
 
 
 urlpatterns = [
