@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, Rating
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
@@ -59,6 +59,22 @@ class StructureSerializer(serializers.ModelSerializer):
         model = Structure
         fields = '__all__'
 
+
+class RatingSerializer(serializers.ModelSerializer):
+    skatespot = serializers.PrimaryKeyRelatedField(queryset=SkateSpot.objects.all())
+    
+    rating_structures = serializers.IntegerField(min_value=1, max_value=5)
+    rating_location = serializers.IntegerField(min_value=1, max_value=5)
+    rating_spot = serializers.IntegerField(min_value=1, max_value=5)
+
+    class Meta:
+        model = Rating
+        fields = ['skatespot', 'rating_structures', 'rating_location', 'rating_spot']
+        
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return super().create(validated_data)
 
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(required=False)
