@@ -128,9 +128,9 @@ class LocalImage(models.Model):
 
     image = models.ImageField(verbose_name="Imagem")
     main_image = models.BooleanField(verbose_name="Imagem Principal?", default=False)
-    skatespot_id = models.ForeignKey(SkateSpot, null=True, blank=True, on_delete=models.CASCADE)
-    skateshop_id = models.ForeignKey(SkateShop, null=True, blank=True, on_delete=models.CASCADE)
-    skateevent_id = models.ForeignKey(SkateEvent, null=True, blank=True, on_delete=models.CASCADE)
+    skatespot_id = models.ForeignKey(SkateSpot, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
+    skateshop_id = models.ForeignKey(SkateShop, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
+    skateevent_id = models.ForeignKey(SkateEvent, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -150,8 +150,14 @@ def user_profile_path(instance, filename):
     return f'users/profile_pics/{instance.username}/{filename}'
 
 class CustomUser(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('skater', 'Skater'),
+        ('owner', 'Shop Owner'),
+    )
+
     profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True)
     email = models.EmailField(unique=True)
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='skater')
 
     def __str__(self):
         return self.username
