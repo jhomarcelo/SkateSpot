@@ -1,8 +1,9 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.db.models import Avg
 import requests
 import re
 
@@ -123,6 +124,25 @@ class Structure(models.Model):
     def __str__(self):
         return self.name
 
+class Rating(models.Model):
+    skatespot = models.ForeignKey(SkateSpot, on_delete=models.CASCADE)
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    rating_structures = models.IntegerField(
+        verbose_name="Nota estruturas",
+        validators=[MinValueValidator(1), MaxValueValidator(5)] 
+    )
+    rating_location = models.IntegerField(
+        verbose_name="Nota Localização",
+        validators=[MinValueValidator(1), MaxValueValidator(5)]  
+    )
+    rating_spot = models.IntegerField(
+        verbose_name="Nota Pista",
+        validators=[MinValueValidator(1), MaxValueValidator(5)] 
+    )
+    create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.skatespot.name}"
 
 class LocalImage(models.Model):
 
