@@ -93,7 +93,7 @@ REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'skate_spots.serializers.CustomRegisterSerializer',
 }
 REST_AUTH_SERIALIZERS = {
-    'LOGIN_SERIALIZER': 'skate_spots.serializers.CustomLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'skate_spots.serializers.CustomUserDetailsSerializer',
 }
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

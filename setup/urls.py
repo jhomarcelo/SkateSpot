@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path,include
 from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView
+from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, CustomUserDetailsView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -23,13 +23,16 @@ urlpatterns = [
     path('', include(router.urls)),
 
     # Autenticação (login, logout, senha, token)
-    path('api/auth/', include('dj_rest_auth.urls')),
-
+    path('api/auth/user/', CustomUserDetailsView.as_view(), name='custom_user_details'),
+    
     # Registro com verificação por e-mail
     path('api/auth/registration/', CustomRegisterView.as_view(), name='custom_register'),
-
+    
     # Confirmação de e-mail (por django-allauth)
     path('api/auth/account/', include('allauth.account.urls')),
+    
+    path('api/auth/', include('dj_rest_auth.urls')),
+
 ]
 
 if settings.DEBUG:

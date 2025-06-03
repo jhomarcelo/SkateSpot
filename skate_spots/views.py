@@ -5,9 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from geopy.distance import geodesic
 from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, CustomRegisterSerializer, CustomUserDetailsSerializer
 from dj_rest_auth.registration.views import RegisterView
-from .serializers import CustomRegisterSerializer
+
+from rest_framework import permissions
+from rest_framework.generics import RetrieveUpdateAPIView
 
 #Retorna os locais
 class SearchView(APIView):
@@ -26,17 +28,10 @@ class SearchView(APIView):
             if search_query:
                 spots = spots.filter(name__icontains=search_query)
             for spot in spots:
-                images = []
                 location_coords = (spot.location_id.latitude, spot.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skatespot_id=spot, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skatespot_id=spot)
-                
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
-                
+
                 results.append({
                     'id': spot.location_id.id,
                     'name': spot.name,
@@ -45,8 +40,7 @@ class SearchView(APIView):
                     'longitude': spot.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-                    'description': spot.description,
-                    'images': images
+                    'description': spot.description
                 })
 
         # Filtra skateshops
@@ -55,16 +49,9 @@ class SearchView(APIView):
             if search_query:
                 shops = shops.filter(name__icontains=search_query)
             for shop in shops:
-                images = []
                 location_coords = (shop.location_id.latitude, shop.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skateshop_id=shop)
-                
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
 
                 results.append({
                     'id': shop.location_id.id,
@@ -74,8 +61,7 @@ class SearchView(APIView):
                     'longitude': shop.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-                    'description': shop.description,
-                    'images': images
+                    'description': shop.description
                 })
 
         # Filtra eventos
@@ -84,17 +70,10 @@ class SearchView(APIView):
             if search_query:
                 events = events.filter(name__icontains=search_query)
             for event in events:
-                images = []
                 location_coords = (event.location_id.latitude, event.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skateevent_id=event)
                 
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
-
                 results.append({
                     'id': event.location_id.id,
                     'name': event.name,
@@ -103,8 +82,7 @@ class SearchView(APIView):
                     'longitude': event.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-                    'description': event.description,
-                    'images': images
+                    'description': event.description
                 })
 
         # Ordenando pela distância
@@ -170,3 +148,11 @@ class StructureViewSet(viewsets.ModelViewSet):
 class CustomRegisterView(RegisterView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomRegisterSerializer
+
+
+class CustomUserDetailsView(RetrieveUpdateAPIView):
+    serializer_class = CustomUserDetailsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
