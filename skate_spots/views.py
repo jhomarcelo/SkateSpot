@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import permissions
 from geopy.distance import geodesic
+from django.db.models import Avg, F
 from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, Rating, validar_cep, consultar_cep
 from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, RatingSerializer
 from dj_rest_auth.registration.views import RegisterView
@@ -136,7 +137,11 @@ class SearchAddressView(APIView):
 
 
 class SkateSpotViewSet(viewsets.ModelViewSet):
-    queryset = SkateSpot.objects.all()
+    queryset = SkateSpot.objects.annotate(
+        avg_structures=Avg('rating__rating_structures'),
+        avg_location=Avg('rating__rating_location'),
+        avg_spot=Avg('rating__rating_spot'),
+    )  
     serializer_class = SkateSpotSerializer
 
 

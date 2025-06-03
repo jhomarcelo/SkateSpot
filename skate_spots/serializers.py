@@ -9,9 +9,28 @@ User = get_user_model()
 
 
 class SkateSpotSerializer(serializers.ModelSerializer):
+    avg_structures = serializers.FloatField(read_only=True)
+    avg_location   = serializers.FloatField(read_only=True)
+    avg_spot       = serializers.FloatField(read_only=True)
+    avg_overall    = serializers.SerializerMethodField()  
+
     class Meta:
         model = SkateSpot
-        fields = '__all__'  # Inclui todos os campos do modelo
+        fields = [
+            'id', 'name', 'description', 'lighting',
+            'water', 'bathroom', 'create_date', 'location_id',
+            'avg_structures', 'avg_location', 'avg_spot', 'avg_overall',
+        ]
+
+    def get_avg_overall(self, obj):
+        categories = [obj.avg_structures, obj.avg_location, obj.avg_spot]
+        valid_categories = [v for v in categories if v is not None and v > 0]
+        
+        if not valid_categories:
+            return 0
+        
+        return round(sum(valid_categories) / len(valid_categories), 2)
+
 
 
 class SkateShopSerializer(serializers.ModelSerializer):
