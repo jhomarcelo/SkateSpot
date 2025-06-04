@@ -136,6 +136,32 @@ class LocationViewSet(viewsets.ModelViewSet):
 class LocalImageViewSet(viewsets.ModelViewSet):
     queryset = LocalImage.objects.all()
     serializer_class = LocalImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        skatespot_id = self.request.data.get("skatespot_id")
+        skateshop_id = self.request.data.get("skateshop_id")
+        skateevent_id = self.request.data.get("skateevent_id")
+
+        is_main = False
+
+        # Verifica se já existe imagem principal para o local
+        if skatespot_id:
+            exists = LocalImage.objects.filter(skatespot_id=skatespot_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        elif skateshop_id:
+            exists = LocalImage.objects.filter(skateshop_id=skateshop_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        elif skateevent_id:
+            exists = LocalImage.objects.filter(skateevent_id=skateevent_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        serializer.save(user_id=self.request.user, main_image=is_main)
 
 class ModalityViewSet(viewsets.ModelViewSet):
     queryset = Modality.objects.all()
