@@ -14,7 +14,7 @@ router.register(r'location', LocationViewSet)
 router.register(r'local-images', LocalImageViewSet)
 router.register(r'modalities', ModalityViewSet)
 router.register(r'structures', StructureViewSet)
-router.register(r'ratings', RatingViewSet)
+router.register(r'ratings', RatingViewSet, basename='rating')
 
 
 urlpatterns = [
