@@ -27,6 +27,7 @@ class SkateSpotSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'lighting',
             'water', 'bathroom', 'create_date', 'location_id',
             'avg_structures', 'avg_location', 'avg_spot', 'avg_overall',
+            'images',
         ]
 
     def get_avg_overall(self, obj):
