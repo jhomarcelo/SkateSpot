@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
@@ -152,7 +153,8 @@ class LocalImage(models.Model):
     skateshop_id = models.ForeignKey(SkateShop, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
     skateevent_id = models.ForeignKey(SkateEvent, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
-
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="uploaded_images")
+    
     def save(self, *args, **kwargs):
         if self.skatespot_id:
             self.image.field.upload_to = 'PISTAS/'  # Caminho para SkateSpot

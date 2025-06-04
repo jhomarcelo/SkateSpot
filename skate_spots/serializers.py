@@ -45,7 +45,8 @@ class LocalImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocalImage
         fields = '__all__' 
-
+        read_only_fields = ('user',)
+        
 class ModalitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Modality
@@ -113,6 +114,7 @@ class CustomRegisterSerializer(RegisterSerializer):
     
 
 class CustomUserDetailsSerializer(serializers.ModelSerializer):
+    uploaded_images = LocalImageSerializer(many=True, read_only=True)
     class Meta:
         model = User
-        fields = ('pk', 'username', 'email', 'first_name', 'last_name', 'profile_picture', 'user_type')
+        fields = ('pk', 'username', 'email', 'first_name', 'last_name', 'profile_picture', 'user_type', 'uploaded_images')
