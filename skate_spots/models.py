@@ -112,6 +112,7 @@ class Modality(models.Model):
     description = models.TextField(verbose_name="Descrição", max_length=250)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
     update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
+    skatespot_id = models.ManyToManyField(SkateSpot, blank=True)
 
     def __str__(self):
         return self.name

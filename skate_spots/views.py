@@ -20,15 +20,27 @@ class SearchView(APIView):
         user_longitude = float(request.query_params.get('lng', 0))
         search_query = request.query_params.get('query', '')
         filter_types = request.query_params.get('types', '').split(',')
+        filter_modalities = request.query_params.get('modalidade', '').split(',')
+        filter_structures = request.query_params.get('estrutura', '').split(',')
 
         results = []
         user_coords = (user_latitude, user_longitude)
 
+        #import pdb;pdb.set_trace()
         # Filtra pistas de skate
         if 'spots' in filter_types:
             spots = SkateSpot.objects.filter(location_id__latitude__isnull=False, location_id__longitude__isnull=False)
             if search_query:
                 spots = spots.filter(name__icontains=search_query)
+
+            if filter_modalities and filter_modalities != ['']:
+                spots = spots.filter(modality__name__in=filter_modalities)
+
+            if filter_structures and filter_structures != ['']:
+                spots = spots.filter(structure__name__in=filter_structures)
+
+            spots = spots.distinct()
+        
             for spot in spots:
                 location_coords = (spot.location_id.latitude, spot.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
