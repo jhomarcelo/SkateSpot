@@ -47,24 +47,30 @@ class Location(models.Model):
     city = models.CharField(verbose_name="Cidade", max_length=30, blank=False)
     state = models.CharField(verbose_name="Estado", max_length=30, blank=False)
     country = models.CharField(verbose_name="País", max_length=30, blank=False)
-    latitude = models.FloatField(verbose_name="Latitude", blank=False)
-    longitude = models.FloatField(verbose_name="Longitude", blank=False)
+    latitude = models.FloatField(verbose_name="Latitude", blank=True, null=True)
+    longitude = models.FloatField(verbose_name="Longitude", blank=True, null=True)
 
 
-    # def save(self, *args, **kwargs):
-    #     """
-    #     Preenche os campos de endereço com base no CEP antes de salvar.
-    #     """
-    #     self.full_clean()  # Valida o modelo
-    #     cep = self.zip_code.replace('-', '')  # Remove o hífen para a consulta
-    #     data = consultar_cep(cep)
-    #     if data:
-    #         self.street = data.get('address', '')
-    #         self.district = data.get('district', '')
-    #         self.city = data.get('city', '')
-    #         self.state = data.get('state', '')
-            
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        endereco_formatado = f"{self.zip_code}+{self.number}".replace(" ", "").replace("-", "")
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        
+        import pdb;pdb.set_trace()
+        
+        params = {
+            "address": endereco_formatado,
+            "key": settings.GOOGLE_API_KEY
+        }
+
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data.get("status") == "OK":
+            resultado = data["results"][0]
+            self.latitude = resultado["geometry"]["location"]["lat"]
+            self.longitude = resultado["geometry"]["location"]["lng"]
+
+        super().save(*args, **kwargs)
 
 
     def __str__(self):
@@ -131,15 +137,18 @@ class Rating(models.Model):
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     rating_structures = models.IntegerField(
         verbose_name="Nota estruturas",
-        validators=[MinValueValidator(1), MaxValueValidator(5)] 
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
     )
     rating_location = models.IntegerField(
         verbose_name="Nota Localização",
-        validators=[MinValueValidator(1), MaxValueValidator(5)]  
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
     )
     rating_spot = models.IntegerField(
         verbose_name="Nota Pista",
-        validators=[MinValueValidator(1), MaxValueValidator(5)] 
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
     )
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
 

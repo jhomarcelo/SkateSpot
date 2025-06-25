@@ -47,7 +47,8 @@ class SearchView(APIView):
                 main_image = LocalImage.objects.filter(skatespot_id=spot, main_image=True).first()  # Obtém a imagem principal
 
                 results.append({
-                    'id': spot.location_id.id,
+                    'id': spot.id,
+                    'location_id': spot.location_id.id,
                     'name': spot.name,
                     'type': 'spot',
                     'latitude': spot.location_id.latitude,
@@ -68,7 +69,8 @@ class SearchView(APIView):
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
 
                 results.append({
-                    'id': shop.location_id.id,
+                    'id': shop.id,
+                    'location_id': shop.location_id.id,
                     'name': shop.name,
                     'type': 'shop',
                     'latitude': shop.location_id.latitude,
@@ -89,7 +91,8 @@ class SearchView(APIView):
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
                 
                 results.append({
-                    'id': event.location_id.id,
+                    'id': event.id,
+                    'location_id': event.location_id.id,
                     'name': event.name,
                     'type': 'event',
                     'latitude': event.location_id.latitude,
@@ -120,8 +123,6 @@ class SearchAddressView(APIView):
                     'cidade': data.get('city', ''),
                     'estado': data.get('state', ''),
                     'pais': 'Brasil' if data.get('state', '') else '',
-                    'latitude': data.get('lat', ''),
-                    'longitude': data.get('lng', ''),
                 })
                 return Response(results)
 
@@ -153,7 +154,7 @@ class LocationViewSet(viewsets.ModelViewSet):
 class LocalImageViewSet(viewsets.ModelViewSet):
     queryset = LocalImage.objects.all()
     serializer_class = LocalImageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         skatespot_id = self.request.data.get("skatespot_id")
