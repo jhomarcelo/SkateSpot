@@ -1,9 +1,9 @@
-# serializers.py
 from rest_framework import serializers
 from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, Rating
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 
 User = get_user_model()
 
@@ -12,14 +12,15 @@ class LocalImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocalImage
         fields = '__all__'
+        read_only_fields = ('user',)
 
 
 class SkateSpotSerializer(serializers.ModelSerializer):
     images = LocalImageSerializer(many=True, read_only=True)
-    avg_structures = serializers.FloatField(read_only=True)
-    avg_location   = serializers.FloatField(read_only=True)
-    avg_spot       = serializers.FloatField(read_only=True)
-    avg_overall    = serializers.SerializerMethodField()  
+    avg_structures = serializers.SerializerMethodField()
+    avg_location = serializers.SerializerMethodField()
+    avg_spot = serializers.SerializerMethodField()
+    avg_overall = serializers.SerializerMethodField()
 
     class Meta:
         model = SkateSpot
@@ -30,15 +31,27 @@ class SkateSpotSerializer(serializers.ModelSerializer):
             'images',
         ]
 
+    def get_avg_structures(self, obj):
+        return obj.rating_set.aggregate(avg=Avg('rating_structures'))['avg'] or 0
+
+    def get_avg_location(self, obj):
+        return obj.rating_set.aggregate(avg=Avg('rating_location'))['avg'] or 0
+
+    def get_avg_spot(self, obj):
+        return obj.rating_set.aggregate(avg=Avg('rating_spot'))['avg'] or 0
+
     def get_avg_overall(self, obj):
-        categories = [obj.avg_structures, obj.avg_location, obj.avg_spot]
+        avg_structures = self.get_avg_structures(obj)
+        avg_location = self.get_avg_location(obj)
+        avg_spot = self.get_avg_spot(obj)
+
+        categories = [avg_structures, avg_location, avg_spot]
         valid_categories = [v for v in categories if v is not None and v > 0]
-        
+
         if not valid_categories:
             return 0
-        
-        return round(sum(valid_categories) / len(valid_categories), 2)
 
+        return round(sum(valid_categories) / len(valid_categories), 2)
 
 
 class SkateShopSerializer(serializers.ModelSerializer):
@@ -58,19 +71,15 @@ class SkateEventSerializer(serializers.ModelSerializer):
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = '__all__' 
+        fields = '__all__'
+        read_only_fields = ['latitude', 'longitude']
 
 
-class LocalImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LocalImage
-        fields = '__all__' 
-        read_only_fields = ('user',)
-        
 class ModalitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Modality
         fields = '__all__'
+
 
 class StructureSerializer(serializers.ModelSerializer):
     skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all())
@@ -83,7 +92,7 @@ class StructureSerializer(serializers.ModelSerializer):
 
 class RatingSerializer(serializers.ModelSerializer):
     skatespot = serializers.PrimaryKeyRelatedField(queryset=SkateSpot.objects.all())
-    
+
     rating_structures = serializers.IntegerField(min_value=1, max_value=5)
     rating_location = serializers.IntegerField(min_value=1, max_value=5)
     rating_spot = serializers.IntegerField(min_value=1, max_value=5)
@@ -91,17 +100,18 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = ['skatespot', 'rating_structures', 'rating_location', 'rating_spot']
-        
+
     def create(self, validated_data):
         user = self.context['request'].user
         validated_data['user'] = user
         return super().create(validated_data)
 
+
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     profile_picture = serializers.ImageField(required=False)
-    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES) 
+    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES)
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -131,7 +141,7 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.user_type = self.cleaned_data.get('user_type')
         user.save()
         return user
-    
+
 
 class CustomUserDetailsSerializer(serializers.ModelSerializer):
     uploaded_images = LocalImageSerializer(many=True, read_only=True)
