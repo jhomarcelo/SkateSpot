@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
 
+    'corsheaders',
+
     # App customizado
     'skate_spots.apps.SkateSpotsConfig',
 ]
