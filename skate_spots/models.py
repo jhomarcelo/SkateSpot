@@ -1,8 +1,10 @@
 from django.utils import timezone
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.db.models import Avg
 import requests
 import re
 
@@ -45,24 +47,30 @@ class Location(models.Model):
     city = models.CharField(verbose_name="Cidade", max_length=30, blank=False)
     state = models.CharField(verbose_name="Estado", max_length=30, blank=False)
     country = models.CharField(verbose_name="País", max_length=30, blank=False)
-    latitude = models.FloatField(verbose_name="Latitude", blank=False)
-    longitude = models.FloatField(verbose_name="Longitude", blank=False)
+    latitude = models.FloatField(verbose_name="Latitude", blank=True, null=True)
+    longitude = models.FloatField(verbose_name="Longitude", blank=True, null=True)
 
 
-    # def save(self, *args, **kwargs):
-    #     """
-    #     Preenche os campos de endereço com base no CEP antes de salvar.
-    #     """
-    #     self.full_clean()  # Valida o modelo
-    #     cep = self.zip_code.replace('-', '')  # Remove o hífen para a consulta
-    #     data = consultar_cep(cep)
-    #     if data:
-    #         self.street = data.get('address', '')
-    #         self.district = data.get('district', '')
-    #         self.city = data.get('city', '')
-    #         self.state = data.get('state', '')
-            
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        endereco_formatado = f"{self.zip_code}+{self.number}".replace(" ", "").replace("-", "")
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        
+        import pdb;pdb.set_trace()
+        
+        params = {
+            "address": endereco_formatado,
+            "key": settings.GOOGLE_API_KEY
+        }
+
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data.get("status") == "OK":
+            resultado = data["results"][0]
+            self.latitude = resultado["geometry"]["location"]["lat"]
+            self.longitude = resultado["geometry"]["location"]["lng"]
+
+        super().save(*args, **kwargs)
 
 
     def __str__(self):
@@ -110,6 +118,7 @@ class Modality(models.Model):
     description = models.TextField(verbose_name="Descrição", max_length=250)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
     update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
+    skatespot_id = models.ManyToManyField(SkateSpot, blank=True)
 
     def __str__(self):
         return self.name
@@ -123,16 +132,39 @@ class Structure(models.Model):
     def __str__(self):
         return self.name
 
+class Rating(models.Model):
+    skatespot = models.ForeignKey(SkateSpot, on_delete=models.CASCADE)
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    rating_structures = models.IntegerField(
+        verbose_name="Nota estruturas",
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
+    )
+    rating_location = models.IntegerField(
+        verbose_name="Nota Localização",
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
+    )
+    rating_spot = models.IntegerField(
+        verbose_name="Nota Pista",
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        default=0
+    )
+    create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.skatespot.name}"
 
 class LocalImage(models.Model):
 
     image = models.ImageField(verbose_name="Imagem")
     main_image = models.BooleanField(verbose_name="Imagem Principal?", default=False)
-    skatespot_id = models.ForeignKey(SkateSpot, null=True, blank=True, on_delete=models.CASCADE)
-    skateshop_id = models.ForeignKey(SkateShop, null=True, blank=True, on_delete=models.CASCADE)
-    skateevent_id = models.ForeignKey(SkateEvent, null=True, blank=True, on_delete=models.CASCADE)
+    skatespot_id = models.ForeignKey(SkateSpot, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
+    skateshop_id = models.ForeignKey(SkateShop, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
+    skateevent_id = models.ForeignKey(SkateEvent, related_name='images', null=True, blank=True, on_delete=models.CASCADE)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
-
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="uploaded_images")
+    
     def save(self, *args, **kwargs):
         if self.skatespot_id:
             self.image.field.upload_to = 'PISTAS/'  # Caminho para SkateSpot
@@ -150,9 +182,18 @@ def user_profile_path(instance, filename):
     return f'users/profile_pics/{instance.username}/{filename}'
 
 class CustomUser(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('skater', 'Skater'),
+        ('owner', 'Shop Owner'),
+    )
+
     profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True)
     email = models.EmailField(unique=True)
+<<<<<<< feat/favoritarpistas
     favorite_spots = models.ManyToManyField(SkateSpot, related_name='favorited_by', blank=True)
+=======
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='skater')
+>>>>>>> main
 
     def __str__(self):
         return self.username

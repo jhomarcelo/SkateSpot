@@ -3,13 +3,18 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework import permissions
 from geopy.distance import geodesic
-from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, FavoriteActionSerializer
-from dj_rest_auth.registration.views import RegisterView
-from .serializers import CustomRegisterSerializer
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from django.db.models import Avg, F
+from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, Rating, validar_cep, consultar_cep
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, CustomRegisterSerializer, CustomUserDetailsSerializer, RatingSerializer, FavoriteActionSerializer
+from dj_rest_auth.registration.views import RegisterView
+
+from rest_framework import permissions
+from rest_framework.generics import RetrieveUpdateAPIView
 
 #Retorna os locais
 class SearchView(APIView):
@@ -18,24 +23,39 @@ class SearchView(APIView):
         user_longitude = float(request.query_params.get('lng', 0))
         search_query = request.query_params.get('query', '')
         filter_types = request.query_params.get('types', '').split(',')
+        filter_modalities = request.query_params.get('modalidade', '').split(',')
+        filter_structures = request.query_params.get('estrutura', '').split(',')
 
         results = []
         user_coords = (user_latitude, user_longitude)
 
+
         favorite_spot_ids = []
         if request.user.is_authenticated:
             favorite_spot_ids = list(request.user.favorite_spots.values_list('id', flat=True))
+
+
+        #import pdb;pdb.set_trace()
 
         # Filtra pistas de skate
         if 'spots' in filter_types:
             spots = SkateSpot.objects.filter(location_id__latitude__isnull=False, location_id__longitude__isnull=False)
             if search_query:
                 spots = spots.filter(name__icontains=search_query)
+
+            if filter_modalities and filter_modalities != ['']:
+                spots = spots.filter(modality__name__in=filter_modalities)
+
+            if filter_structures and filter_structures != ['']:
+                spots = spots.filter(structure__name__in=filter_structures)
+
+            spots = spots.distinct()
+        
             for spot in spots:
-                images = []
                 location_coords = (spot.location_id.latitude, spot.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skatespot_id=spot, main_image=True).first()  # Obtém a imagem principal
+
                 images_local = LocalImage.objects.filter(skatespot_id=spot)
                 
                 for image_local in images_local:
@@ -46,17 +66,25 @@ class SearchView(APIView):
                 # Verificar se é favorito
                 is_favorite = spot.id in favorite_spot_ids
                 
+
+
+
                 results.append({
-                    'id': spot.location_id.id,
+                    'id': spot.id,
+                    'location_id': spot.location_id.id,
                     'name': spot.name,
                     'type': 'spot',
                     'latitude': spot.location_id.latitude,
                     'longitude': spot.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
+
                     'description': spot.description,
                     'images': images,
                     'is_favorite': is_favorite 
+
+                    'description': spot.description
+
                 })
 
         # Filtra skateshops
@@ -65,27 +93,20 @@ class SearchView(APIView):
             if search_query:
                 shops = shops.filter(name__icontains=search_query)
             for shop in shops:
-                images = []
                 location_coords = (shop.location_id.latitude, shop.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateshop_id=shop, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skateshop_id=shop)
-                
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
 
                 results.append({
-                    'id': shop.location_id.id,
+                    'id': shop.id,
+                    'location_id': shop.location_id.id,
                     'name': shop.name,
                     'type': 'shop',
                     'latitude': shop.location_id.latitude,
                     'longitude': shop.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-                    'description': shop.description,
-                    'images': images
+                    'description': shop.description
                 })
 
         # Filtra eventos
@@ -94,27 +115,20 @@ class SearchView(APIView):
             if search_query:
                 events = events.filter(name__icontains=search_query)
             for event in events:
-                images = []
                 location_coords = (event.location_id.latitude, event.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skateevent_id=event, main_image=True).first()  # Obtém a imagem principal
-                images_local = LocalImage.objects.filter(skateevent_id=event)
                 
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
-
                 results.append({
-                    'id': event.location_id.id,
+                    'id': event.id,
+                    'location_id': event.location_id.id,
                     'name': event.name,
                     'type': 'event',
                     'latitude': event.location_id.latitude,
                     'longitude': event.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-                    'description': event.description,
-                    'images': images
+                    'description': event.description
                 })
 
         # Ordenando pela distância
@@ -138,14 +152,16 @@ class SearchAddressView(APIView):
                     'cidade': data.get('city', ''),
                     'estado': data.get('state', ''),
                     'pais': 'Brasil' if data.get('state', '') else '',
-                    'latitude': data.get('lat', ''),
-                    'longitude': data.get('lng', ''),
                 })
                 return Response(results)
 
 
 class SkateSpotViewSet(viewsets.ModelViewSet):
-    queryset = SkateSpot.objects.all()
+    queryset = SkateSpot.objects.annotate(
+        avg_structures=Avg('rating__rating_structures'),
+        avg_location=Avg('rating__rating_location'),
+        avg_spot=Avg('rating__rating_spot'),
+    )  
     serializer_class = SkateSpotSerializer
 
 
@@ -167,6 +183,32 @@ class LocationViewSet(viewsets.ModelViewSet):
 class LocalImageViewSet(viewsets.ModelViewSet):
     queryset = LocalImage.objects.all()
     serializer_class = LocalImageSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        skatespot_id = self.request.data.get("skatespot_id")
+        skateshop_id = self.request.data.get("skateshop_id")
+        skateevent_id = self.request.data.get("skateevent_id")
+
+        is_main = False
+
+        # Verifica se já existe imagem principal para o local
+        if skatespot_id:
+            exists = LocalImage.objects.filter(skatespot_id=skatespot_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        elif skateshop_id:
+            exists = LocalImage.objects.filter(skateshop_id=skateshop_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        elif skateevent_id:
+            exists = LocalImage.objects.filter(skateevent_id=skateevent_id, main_image=True).exists()
+            if not exists:
+                is_main = True
+
+        serializer.save(user_id=self.request.user, main_image=is_main)
 
 class ModalityViewSet(viewsets.ModelViewSet):
     queryset = Modality.objects.all()
@@ -176,6 +218,16 @@ class StructureViewSet(viewsets.ModelViewSet):
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
 
+class RatingViewSet(viewsets.ModelViewSet):
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
+    permission_classes = [permissions.IsAuthenticated]  
+
+    def get_queryset(self):
+        return Rating.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class FavoriteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -228,3 +280,11 @@ class UserFavoritesView(APIView):
 class CustomRegisterView(RegisterView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomRegisterSerializer
+
+
+class CustomUserDetailsView(RetrieveUpdateAPIView):
+    serializer_class = CustomUserDetailsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user

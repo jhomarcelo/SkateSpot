@@ -13,7 +13,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 
 import os
+from dotenv import load_dotenv
 
+# Carrega as variáveis do .env
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -93,7 +96,7 @@ REST_AUTH_REGISTER_SERIALIZERS = {
     'REGISTER_SERIALIZER': 'skate_spots.serializers.CustomRegisterSerializer',
 }
 REST_AUTH_SERIALIZERS = {
-    'LOGIN_SERIALIZER': 'skate_spots.serializers.CustomLoginSerializer',
+    'USER_DETAILS_SERIALIZER': 'skate_spots.serializers.CustomUserDetailsSerializer',
 }
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -193,3 +196,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Configurações para arquivos de mídia
 MEDIA_URL = '/media/'  # URL que será usado para acessar os arquivos de mídia
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Diretório onde os arquivos de mídia serão armazenados
+
+# Chave API Google
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
