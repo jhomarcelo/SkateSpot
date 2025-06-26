@@ -44,10 +44,10 @@ class SearchView(APIView):
                 spots = spots.filter(name__icontains=search_query)
 
             if filter_modalities and filter_modalities != ['']:
-                spots = spots.filter(modality__name__in=filter_modalities)
+                spots = spots.filter(modalities__name__in=filter_modalities)
 
             if filter_structures and filter_structures != ['']:
-                spots = spots.filter(structure__name__in=filter_structures)
+                spots = spots.filter(structures__name__in=filter_structures)
 
             spots = spots.distinct()
         

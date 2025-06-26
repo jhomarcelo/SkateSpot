@@ -54,9 +54,7 @@ class Location(models.Model):
     def save(self, *args, **kwargs):
         endereco_formatado = f"{self.zip_code}+{self.number}".replace(" ", "").replace("-", "")
         url = "https://maps.googleapis.com/maps/api/geocode/json"
-        
-        import pdb;pdb.set_trace()
-        
+              
         params = {
             "address": endereco_formatado,
             "key": settings.GOOGLE_API_KEY
@@ -87,6 +85,9 @@ class SkateSpot(models.Model):
     create_date = models.DateTimeField(verbose_name="Data de Criação")
     location_id = models.OneToOneField(Location, on_delete=models.CASCADE)
 
+    modalities = models.ManyToManyField('Modality', blank=True)
+    structures = models.ManyToManyField('Structure', blank=True)
+
     def __str__(self):
         return self.name
 
@@ -110,6 +111,11 @@ class SkateShop(models.Model):
     description = models.TextField(verbose_name="Descrição", max_length=250)
     location_id = models.OneToOneField(Location, on_delete=models.CASCADE)
 
+    website = models.URLField(verbose_name="Website", max_length=250, blank=True, null=True)
+    whatsapp = models.CharField(verbose_name="WhatsApp", max_length=20, blank=True, null=True)
+    catalogo_pdf = models.FileField(upload_to="CATALOGOS/", blank=True, null=True)
+    business_hours = models.JSONField(verbose_name="Horários de funcionamento", blank=True, null=True)
+
     def __str__(self):
         return self.name
     
@@ -118,7 +124,6 @@ class Modality(models.Model):
     description = models.TextField(verbose_name="Descrição", max_length=250)
     create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
     update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
-    skatespot_id = models.ManyToManyField(SkateSpot, blank=True)
 
     def __str__(self):
         return self.name
@@ -126,8 +131,6 @@ class Modality(models.Model):
 class Structure(models.Model):
     name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
     description = models.TextField(verbose_name="Descrição", max_length=250)
-    skatespot_id = models.ManyToManyField(SkateSpot, blank=True)
-    modality_id = models.ManyToManyField(Modality, blank=True)
 
     def __str__(self):
         return self.name

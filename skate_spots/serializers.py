@@ -18,9 +18,7 @@ class LocalImageSerializer(serializers.ModelSerializer):
 class SkateSpotSerializer(serializers.ModelSerializer):
 
     is_favorite = serializers.SerializerMethodField()
-    
-
-    
+        
     def get_is_favorite(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -33,13 +31,16 @@ class SkateSpotSerializer(serializers.ModelSerializer):
     avg_spot = serializers.SerializerMethodField()
     avg_overall = serializers.SerializerMethodField()
 
+    modalities = serializers.PrimaryKeyRelatedField(queryset=Modality.objects.all(), many=True)
+    structures = serializers.PrimaryKeyRelatedField(queryset=Structure.objects.all(), many=True)
+
     class Meta:
         model = SkateSpot
         fields = [
             'id', 'name', 'description', 'lighting',
             'water', 'bathroom', 'create_date', 'location_id',
             'avg_structures', 'avg_location', 'avg_spot', 'avg_overall',
-            'images',
+            'images','modalities','structures','is_favorite'
         ]
 
     def get_avg_structures(self, obj):
@@ -94,8 +95,8 @@ class ModalitySerializer(serializers.ModelSerializer):
 
 
 class StructureSerializer(serializers.ModelSerializer):
-    skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all())
-    modality_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Modality.objects.all())
+    # skatespot_id = serializers.PrimaryKeyRelatedField(many=True, queryset=SkateSpot.objects.all())
+    # modality_id = serializers.PrimaryKeyRelatedField(many=True, queryset=Modality.objects.all())
 
     class Meta:
         model = Structure
