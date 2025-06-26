@@ -55,20 +55,10 @@ class SearchView(APIView):
                 location_coords = (spot.location_id.latitude, spot.location_id.longitude)
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skatespot_id=spot, main_image=True).first()  # Obtém a imagem principal
-
-                images_local = LocalImage.objects.filter(skatespot_id=spot)
-                
-                for image_local in images_local:
-                    images.append({
-                        'image': image_local.image.url
-                    })
                 
                 # Verificar se é favorito
                 is_favorite = spot.id in favorite_spot_ids
                 
-
-
-
                 results.append({
                     'id': spot.id,
                     'location_id': spot.location_id.id,
@@ -78,13 +68,8 @@ class SearchView(APIView):
                     'longitude': spot.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
-
                     'description': spot.description,
-                    'images': images,
                     'is_favorite': is_favorite 
-
-                    'description': spot.description
-
                 })
 
         # Filtra skateshops

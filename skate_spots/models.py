@@ -189,11 +189,8 @@ class CustomUser(AbstractUser):
 
     profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True)
     email = models.EmailField(unique=True)
-<<<<<<< feat/favoritarpistas
     favorite_spots = models.ManyToManyField(SkateSpot, related_name='favorited_by', blank=True)
-=======
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='skater')
->>>>>>> main
 
     def __str__(self):
         return self.username
