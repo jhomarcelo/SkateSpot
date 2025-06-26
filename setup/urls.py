@@ -2,11 +2,7 @@ from django.contrib import admin
 from django.urls import path,include
 from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
-<<<<<<< feat/favoritarpistas
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, FavoriteView, UserFavoritesView
-=======
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, CustomUserDetailsView, RatingViewSet
->>>>>>> main
+from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, CustomUserDetailsView, RatingViewSet, FavoriteView, UserFavoritesView
 from django.conf import settings
 from django.conf.urls.static import static
 
