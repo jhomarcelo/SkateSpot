@@ -152,6 +152,7 @@ def user_profile_path(instance, filename):
 class CustomUser(AbstractUser):
     profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True)
     email = models.EmailField(unique=True)
+    favorite_spots = models.ManyToManyField(SkateSpot, related_name='favorited_by', blank=True)
 
     def __str__(self):
         return self.username

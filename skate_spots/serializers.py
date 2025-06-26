@@ -9,9 +9,17 @@ User = get_user_model()
 
 
 class SkateSpotSerializer(serializers.ModelSerializer):
+    is_favorite = serializers.SerializerMethodField()
+    
     class Meta:
         model = SkateSpot
-        fields = '__all__'  # Inclui todos os campos do modelo
+        fields = '__all__'
+    
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(id=request.user.id).exists()
+        return False
 
 
 class SkateShopSerializer(serializers.ModelSerializer):
@@ -50,6 +58,12 @@ class StructureSerializer(serializers.ModelSerializer):
         model = Structure
         fields = '__all__'
 
+class FavoriteActionSerializer(serializers.Serializer):
+    spot_id = serializers.IntegerField(required=True)
+    action = serializers.ChoiceField(
+        choices=['favorite', 'unfavorite'], 
+        required=True
+    )
 
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(required=False)

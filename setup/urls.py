@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path,include
 from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView
+from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, FavoriteView, UserFavoritesView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -30,6 +30,9 @@ urlpatterns = [
 
     # Confirmação de e-mail (por django-allauth)
     path('api/auth/account/', include('allauth.account.urls')),
+
+    path('api/favorites/', FavoriteView.as_view(), name='favorites_action'),
+    path('api/my-favorites/', UserFavoritesView.as_view(), name='user_favorites'),
 ]
 
 if settings.DEBUG:

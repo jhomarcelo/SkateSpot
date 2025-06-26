@@ -5,9 +5,11 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from geopy.distance import geodesic
 from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, FavoriteActionSerializer
 from dj_rest_auth.registration.views import RegisterView
 from .serializers import CustomRegisterSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 
 #Retorna os locais
 class SearchView(APIView):
@@ -19,6 +21,10 @@ class SearchView(APIView):
 
         results = []
         user_coords = (user_latitude, user_longitude)
+
+        favorite_spot_ids = []
+        if request.user.is_authenticated:
+            favorite_spot_ids = list(request.user.favorite_spots.values_list('id', flat=True))
 
         # Filtra pistas de skate
         if 'spots' in filter_types:
@@ -37,6 +43,9 @@ class SearchView(APIView):
                         'image': image_local.image.url
                     })
                 
+                # Verificar se é favorito
+                is_favorite = spot.id in favorite_spot_ids
+                
                 results.append({
                     'id': spot.location_id.id,
                     'name': spot.name,
@@ -46,7 +55,8 @@ class SearchView(APIView):
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
                     'description': spot.description,
-                    'images': images
+                    'images': images,
+                    'is_favorite': is_favorite 
                 })
 
         # Filtra skateshops
@@ -166,6 +176,54 @@ class StructureViewSet(viewsets.ModelViewSet):
     queryset = Structure.objects.all()
     serializer_class = StructureSerializer
 
+
+class FavoriteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FavoriteActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        spot_loc_id = serializer.validated_data['spot_id']
+        action      = serializer.validated_data['action']
+
+        try:
+            spot = SkateSpot.objects.get(location_id=spot_loc_id)
+        except SkateSpot.DoesNotExist:
+            return Response({'error': 'Pista não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        if action == 'favorite':
+            user.favorite_spots.add(spot)
+            return Response({'status': 'favoritado'}, status=status.HTTP_200_OK)
+
+        user.favorite_spots.remove(spot)
+        return Response({'status': 'desfavoritado'}, status=status.HTTP_200_OK)
+    
+class UserFavoritesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        favs = user.favorite_spots.select_related('location_id').all()
+
+        data = []
+        for spot in favs:
+            data.append({
+                'id':          spot.location_id.id,      
+                'name':        spot.name,
+                'type':        'spot',
+                'latitude':    spot.location_id.latitude,
+                'longitude':   spot.location_id.longitude,
+                'main_image':  spot.localimage_set.filter(main_image=True).first().image.url if spot.localimage_set.filter(main_image=True).exists() else '',
+                'distance':    0,                        
+                'description': spot.description,
+                'images':      [{'image': img.image.url} for img in spot.localimage_set.all()],
+                'is_favorite': True,
+            })
+
+        return Response(data)
 
 class CustomRegisterView(RegisterView):
     queryset = CustomUser.objects.all()
