@@ -5,9 +5,12 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import permissions
 from geopy.distance import geodesic
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 from django.db.models import Avg, F
 from .models import SkateSpot, SkateShop, SkateEvent, Location, LocalImage, Modality, Structure, CustomUser, Rating, validar_cep, consultar_cep
-from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, CustomRegisterSerializer, CustomUserDetailsSerializer, RatingSerializer
+from .serializers import SkateSpotSerializer, SkateShopSerializer, SkateEventSerializer, LocationSerializer, LocalImageSerializer, ModalitySerializer, StructureSerializer, CustomRegisterSerializer, CustomUserDetailsSerializer, RatingSerializer, FavoriteActionSerializer
 from dj_rest_auth.registration.views import RegisterView
 
 from rest_framework import permissions
@@ -26,7 +29,14 @@ class SearchView(APIView):
         results = []
         user_coords = (user_latitude, user_longitude)
 
+
+        favorite_spot_ids = []
+        if request.user.is_authenticated:
+            favorite_spot_ids = list(request.user.favorite_spots.values_list('id', flat=True))
+
+
         #import pdb;pdb.set_trace()
+
         # Filtra pistas de skate
         if 'spots' in filter_types:
             spots = SkateSpot.objects.filter(location_id__latitude__isnull=False, location_id__longitude__isnull=False)
@@ -46,6 +56,19 @@ class SearchView(APIView):
                 distance = geodesic(user_coords, location_coords).km
                 main_image = LocalImage.objects.filter(skatespot_id=spot, main_image=True).first()  # Obtém a imagem principal
 
+                images_local = LocalImage.objects.filter(skatespot_id=spot)
+                
+                for image_local in images_local:
+                    images.append({
+                        'image': image_local.image.url
+                    })
+                
+                # Verificar se é favorito
+                is_favorite = spot.id in favorite_spot_ids
+                
+
+
+
                 results.append({
                     'id': spot.id,
                     'location_id': spot.location_id.id,
@@ -55,7 +78,13 @@ class SearchView(APIView):
                     'longitude': spot.location_id.longitude,
                     'main_image': main_image.image.url if main_image else '',  # Usa a imagem principal
                     'distance': distance,
+
+                    'description': spot.description,
+                    'images': images,
+                    'is_favorite': is_favorite 
+
                     'description': spot.description
+
                 })
 
         # Filtra skateshops
@@ -199,6 +228,54 @@ class RatingViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class FavoriteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FavoriteActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        spot_loc_id = serializer.validated_data['spot_id']
+        action      = serializer.validated_data['action']
+
+        try:
+            spot = SkateSpot.objects.get(location_id=spot_loc_id)
+        except SkateSpot.DoesNotExist:
+            return Response({'error': 'Pista não encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        if action == 'favorite':
+            user.favorite_spots.add(spot)
+            return Response({'status': 'favoritado'}, status=status.HTTP_200_OK)
+
+        user.favorite_spots.remove(spot)
+        return Response({'status': 'desfavoritado'}, status=status.HTTP_200_OK)
+    
+class UserFavoritesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        favs = user.favorite_spots.select_related('location_id').all()
+
+        data = []
+        for spot in favs:
+            data.append({
+                'id':          spot.location_id.id,      
+                'name':        spot.name,
+                'type':        'spot',
+                'latitude':    spot.location_id.latitude,
+                'longitude':   spot.location_id.longitude,
+                'main_image':  spot.localimage_set.filter(main_image=True).first().image.url if spot.localimage_set.filter(main_image=True).exists() else '',
+                'distance':    0,                        
+                'description': spot.description,
+                'images':      [{'image': img.image.url} for img in spot.localimage_set.all()],
+                'is_favorite': True,
+            })
+
+        return Response(data)
 
 class CustomRegisterView(RegisterView):
     queryset = CustomUser.objects.all()

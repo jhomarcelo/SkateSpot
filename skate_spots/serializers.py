@@ -16,6 +16,17 @@ class LocalImageSerializer(serializers.ModelSerializer):
 
 
 class SkateSpotSerializer(serializers.ModelSerializer):
+
+    is_favorite = serializers.SerializerMethodField()
+    
+
+    
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(id=request.user.id).exists()
+        return False
+
     images = LocalImageSerializer(many=True, read_only=True)
     avg_structures = serializers.SerializerMethodField()
     avg_location = serializers.SerializerMethodField()
@@ -54,6 +65,7 @@ class SkateSpotSerializer(serializers.ModelSerializer):
         return round(sum(valid_categories) / len(valid_categories), 2)
 
 
+
 class SkateShopSerializer(serializers.ModelSerializer):
     images = LocalImageSerializer(many=True, read_only=True)
     class Meta:
@@ -89,6 +101,12 @@ class StructureSerializer(serializers.ModelSerializer):
         model = Structure
         fields = '__all__'
 
+class FavoriteActionSerializer(serializers.Serializer):
+    spot_id = serializers.IntegerField(required=True)
+    action = serializers.ChoiceField(
+        choices=['favorite', 'unfavorite'], 
+        required=True
+    )
 
 class RatingSerializer(serializers.ModelSerializer):
     skatespot = serializers.PrimaryKeyRelatedField(queryset=SkateSpot.objects.all())
