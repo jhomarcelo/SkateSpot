@@ -75,6 +75,22 @@ class Location(models.Model):
         return self.zip_code
     
 
+class Modality(models.Model):
+    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
+    description = models.TextField(verbose_name="Descrição", max_length=250)
+    create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
+    update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class Structure(models.Model):
+    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
+    description = models.TextField(verbose_name="Descrição", max_length=250)
+
+    def __str__(self):
+        return self.name
+
 class SkateSpot(models.Model):
 
     name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
@@ -85,8 +101,8 @@ class SkateSpot(models.Model):
     create_date = models.DateTimeField(verbose_name="Data de Criação")
     location_id = models.OneToOneField(Location, on_delete=models.CASCADE)
 
-    modalities = models.ManyToManyField('Modality', blank=True)
-    structures = models.ManyToManyField('Structure', blank=True)
+    modalities = models.ManyToManyField(Modality, blank=True)
+    structures = models.ManyToManyField(Structure, blank=True)
 
     def __str__(self):
         return self.name
@@ -119,22 +135,6 @@ class SkateShop(models.Model):
     def __str__(self):
         return self.name
     
-class Modality(models.Model):
-    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
-    description = models.TextField(verbose_name="Descrição", max_length=250)
-    create_date = models.DateTimeField(verbose_name="Data de Criação", auto_now_add=True)
-    update_date = models.DateTimeField(verbose_name="Data de Atualização", auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-class Structure(models.Model):
-    name = models.CharField(verbose_name="Nome", max_length=30, blank=False)
-    description = models.TextField(verbose_name="Descrição", max_length=250)
-
-    def __str__(self):
-        return self.name
-
 class Rating(models.Model):
     skatespot = models.ForeignKey(SkateSpot, on_delete=models.CASCADE)
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
