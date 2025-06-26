@@ -2,11 +2,7 @@ from django.contrib import admin
 from django.urls import path,include
 from skate_spots.views import SearchView, SearchAddressView
 from rest_framework.routers import DefaultRouter
-<<<<<<< feat/favoritarpistas
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, FavoriteView, UserFavoritesView
-=======
-from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, CustomUserDetailsView, RatingViewSet
->>>>>>> main
+from skate_spots.views import SkateSpotViewSet, SkateShopViewSet, SkateEventViewSet, LocationViewSet, LocalImageViewSet, ModalityViewSet, StructureViewSet, CustomRegisterView, CustomUserDetailsView, RatingViewSet, FavoriteView, UserFavoritesView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -35,15 +31,12 @@ urlpatterns = [
     
     # Confirmação de e-mail (por django-allauth)
     path('api/auth/account/', include('allauth.account.urls')),
-<<<<<<< feat/favoritarpistas
 
     path('api/favorites/', FavoriteView.as_view(), name='favorites_action'),
     path('api/my-favorites/', UserFavoritesView.as_view(), name='user_favorites'),
-=======
     
     path('api/auth/', include('dj_rest_auth.urls')),
 
->>>>>>> main
 ]
 
 if settings.DEBUG:
